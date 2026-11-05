@@ -1,0 +1,14 @@
+[problem1-init]
+description = "Create the problem database and load schema/data"
+run = """
+if ! docker compose exec -T db psql -U postgres -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname = '1-orders-customer-index'" | grep -q 1; then
+  docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE "1-orders-customer-index"'
+fi
+docker compose exec -T db psql -U postgres -d "1-orders-customer-index" -v ON_ERROR_STOP=1 < problems/1-orders-customer-index/init/01_schema_and_data.sql
+"""
+
+[problem1-run]
+description = "Run the slow query against the problem database"
+run = """
+docker compose exec -T db psql -U postgres -d "1-orders-customer-index" -v ON_ERROR_STOP=1 < problems/1-orders-customer-index/slow_query.sql
+"""
