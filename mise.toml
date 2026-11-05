@@ -1,0 +1,2 @@
+[task_config]
+includes = ["problems/1-orders-customer-index/tasks.toml"]
