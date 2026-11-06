@@ -1,6 +1,8 @@
 [problem1-init]
 description = "Create the problem database and load schema/data"
 run = """
+#!/usr/bin/env bash
+set -euo pipefail
 if ! docker compose exec -T db psql -U postgres -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname = '1-orders-customer-index'" | grep -q 1; then
   docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE "1-orders-customer-index"'
 fi
