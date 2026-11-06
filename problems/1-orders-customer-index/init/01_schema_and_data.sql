@@ -1,3 +1,20 @@
+-- 件数が期待どおりなら何もしない（再実行でデータを変えず、後から足したインデックスも残す）
+SELECT (
+  to_regclass('public.customers') IS NOT NULL
+  AND to_regclass('public.orders') IS NOT NULL
+)::int AS tables_exist \gset
+
+\if :tables_exist
+SELECT (
+  (SELECT count(*) FROM customers) = 50000
+  AND (SELECT count(*) FROM orders) = 2000000
+)::int AS already_loaded \gset
+\else
+\set already_loaded 0
+\endif
+
+\if :already_loaded
+\else
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS customers;
 
@@ -14,7 +31,6 @@ CREATE TABLE orders (
   total_amount  numeric(12, 2) NOT NULL,
   ordered_at    timestamptz NOT NULL
 );
--- ※ わざと orders.customer_id にインデックスは貼っていない
 
 -- 顧客 5万件
 INSERT INTO customers (name, email)
@@ -23,7 +39,9 @@ SELECT
   'user' || g || '@example.com'
 FROM generate_series(1, 50000) AS g;
 
--- 注文 200万件（顧客にばらまく）
+-- 注文 200万件（顧客にばらまく）。seed を固定して再構築しても同じ内容にする
+SELECT setseed(0.42);
+
 INSERT INTO orders (customer_id, status, total_amount, ordered_at)
 SELECT
   (random() * 49999)::bigint + 1,
@@ -34,3 +52,4 @@ FROM generate_series(1, 2000000);
 
 ANALYZE customers;
 ANALYZE orders;
+\endif
